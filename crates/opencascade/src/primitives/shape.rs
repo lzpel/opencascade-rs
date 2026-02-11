@@ -570,6 +570,26 @@ impl Shape {
         }
     }
 
+    pub fn write_brep(&self, path: impl AsRef<Path>) -> Result<(), Error> {
+        let success = ffi::write_brep(&self.inner, path.as_ref().to_string_lossy().to_string());
+
+        if success {
+            Ok(())
+        } else {
+            Err(Error::BrepWriteFailed)
+        }
+    }
+
+    pub fn read_brep(path: impl AsRef<Path>) -> Result<Self, Error> {
+        let inner = ffi::read_brep(path.as_ref().to_string_lossy().to_string());
+
+        if inner.is_null() {
+            Err(Error::BrepReadFailed)
+        } else {
+            Ok(Self { inner })
+        }
+    }
+
     #[must_use]
     pub fn union(&self, other: &Shape) -> BooleanShape {
         let mut fuse_operation = ffi::BRepAlgoAPI_Fuse_ctor(&self.inner, &other.inner);
