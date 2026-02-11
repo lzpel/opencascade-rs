@@ -37,6 +37,7 @@
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRepPrimAPI_MakeTorus.hxx>
+#include <BRep_Builder.hxx>
 #include <BRepTools.hxx>
 #include <GCE2d_MakeSegment.hxx>
 #include <GCPnts_TangentialDeflection.hxx>
@@ -464,6 +465,19 @@ BRepFilletAPI_MakeFillet2d_add_chamfer_angle(BRepFilletAPI_MakeFillet2d &make_fi
 // BRepTools
 inline std::unique_ptr<TopoDS_Wire> outer_wire(const TopoDS_Face &face) {
   return std::unique_ptr<TopoDS_Wire>(new TopoDS_Wire(BRepTools::OuterWire(face)));
+}
+
+inline bool write_brep(const TopoDS_Shape &shape, const rust::String &path) {
+  return BRepTools::Write(shape, path.c_str());
+}
+
+inline std::unique_ptr<TopoDS_Shape> read_brep(const rust::String &path) {
+  BRep_Builder builder;
+  auto shape = std::unique_ptr<TopoDS_Shape>(new TopoDS_Shape());
+  if (BRepTools::Read(*shape, path.c_str(), builder)) {
+    return shape;
+  }
+  return std::unique_ptr<TopoDS_Shape>(nullptr);
 }
 
 // Collections

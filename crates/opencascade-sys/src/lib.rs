@@ -1356,6 +1356,8 @@ pub mod ffi {
 
         // BRepTools
         pub fn outer_wire(face: &TopoDS_Face) -> UniquePtr<TopoDS_Wire>;
+        pub fn write_brep(shape: &TopoDS_Shape, path: String) -> bool;
+        pub fn read_brep(path: String) -> UniquePtr<TopoDS_Shape>;
 
         // Cleaning
         type ShapeUpgrade_UnifySameDomain;
