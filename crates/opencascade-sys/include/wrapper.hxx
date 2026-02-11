@@ -480,6 +480,20 @@ inline std::unique_ptr<TopoDS_Shape> read_brep(rust::String path) {
   return std::unique_ptr<TopoDS_Shape>(nullptr);
 }
 
+// BinTools
+#include <BinTools.hxx>
+inline bool write_brep_bin(const TopoDS_Shape &shape, rust::String path) {
+  return BinTools::Write(shape, path.c_str());
+}
+
+inline std::unique_ptr<TopoDS_Shape> read_brep_bin(rust::String path) {
+  auto shape = std::unique_ptr<TopoDS_Shape>(new TopoDS_Shape());
+  if (BinTools::Read(*shape, path.c_str())) {
+    return shape;
+  }
+  return std::unique_ptr<TopoDS_Shape>(nullptr);
+}
+
 // Collections
 inline void map_shapes(const TopoDS_Shape &S, const TopAbs_ShapeEnum T, TopTools_IndexedMapOfShape &M) {
   TopExp::MapShapes(S, T, M);

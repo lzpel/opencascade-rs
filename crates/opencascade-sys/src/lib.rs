@@ -1407,6 +1407,10 @@ pub mod ffi {
         type BRepBndLib;
 
         pub fn BRepBndLib_Add(shape: &TopoDS_Shape, bb: Pin<&mut Bnd_Box>, use_triangulation: bool);
+
+        // BinTools
+        pub fn write_brep_bin(shape: &TopoDS_Shape, path: String) -> bool;
+        pub fn read_brep_bin(path: String) -> UniquePtr<TopoDS_Shape>;
     }
 }
 
