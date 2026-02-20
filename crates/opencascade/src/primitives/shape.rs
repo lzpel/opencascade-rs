@@ -570,8 +570,9 @@ impl Shape {
         }
     }
 
-    pub fn write_brep(&self, path: impl AsRef<Path>) -> Result<(), Error> {
-        let success = ffi::write_brep(&self.inner, path.as_ref().to_string_lossy().to_string());
+    pub fn write_brep_text(&self, path: impl AsRef<Path>) -> Result<(), Error> {
+        let success =
+            ffi::write_brep_text(&self.inner, path.as_ref().to_string_lossy().to_string());
 
         if success {
             Ok(())
@@ -580,8 +581,8 @@ impl Shape {
         }
     }
 
-    pub fn read_brep(path: impl AsRef<Path>) -> Result<Self, Error> {
-        let inner = ffi::read_brep(path.as_ref().to_string_lossy().to_string());
+    pub fn read_brep_text(path: impl AsRef<Path>) -> Result<Self, Error> {
+        let inner = ffi::read_brep_text(path.as_ref().to_string_lossy().to_string());
 
         if inner.is_null() {
             Err(Error::BrepReadFailed)
