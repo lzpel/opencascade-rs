@@ -494,6 +494,88 @@ inline std::unique_ptr<TopoDS_Shape> read_brep_bin(rust::String path) {
   return std::unique_ptr<TopoDS_Shape>(nullptr);
 }
 
+// Stream-based BRep I/O
+//
+// RustWriteStreambuf / RustReadStreambuf bridge Rust Write/Read callbacks to
+// C++ std::ostream / std::istream, enabling true streaming without an
+// intermediate buffer.
+
+struct RustWriteStreambuf : public std::streambuf {
+  using WriteFn = size_t (*)(void *ctx, const uint8_t *data, size_t len);
+  void *ctx;
+  WriteFn write_fn;
+
+  RustWriteStreambuf(void *ctx_, WriteFn fn) : ctx(ctx_), write_fn(fn) {}
+
+protected:
+  std::streamsize xsputn(const char *s, std::streamsize n) override {
+    return static_cast<std::streamsize>(write_fn(ctx, reinterpret_cast<const uint8_t *>(s), static_cast<size_t>(n)));
+  }
+  int overflow(int c) override {
+    if (c != EOF) {
+      char ch = static_cast<char>(c);
+      return xsputn(&ch, 1) == 1 ? c : EOF;
+    }
+    return c;
+  }
+};
+
+struct RustReadStreambuf : public std::streambuf {
+  static constexpr size_t kBufSize = 4096;
+  using ReadFn = size_t (*)(void *ctx, uint8_t *data, size_t len);
+  void *ctx;
+  ReadFn read_fn;
+  char buf_[kBufSize];
+
+  RustReadStreambuf(void *ctx_, ReadFn fn) : ctx(ctx_), read_fn(fn) {}
+
+protected:
+  int underflow() override {
+    if (gptr() < egptr())
+      return traits_type::to_int_type(*gptr());
+    size_t n = read_fn(ctx, reinterpret_cast<uint8_t *>(buf_), kBufSize);
+    if (n == 0)
+      return traits_type::eof();
+    setg(buf_, buf_, buf_ + n);
+    return traits_type::to_int_type(*gptr());
+  }
+};
+
+inline std::unique_ptr<TopoDS_Shape> TopoDS_Shape_ctor() { return std::unique_ptr<TopoDS_Shape>(new TopoDS_Shape()); }
+
+extern "C" inline bool write_brep_text_stream(const TopoDS_Shape *shape, void *ctx,
+                                              size_t (*write_fn)(void *, const uint8_t *, size_t)) {
+  RustWriteStreambuf buf(ctx, write_fn);
+  std::ostream os(&buf);
+  BRepTools::Write(*shape, os);
+  return !os.fail();
+}
+
+extern "C" inline bool read_brep_text_stream(TopoDS_Shape *shape, void *ctx,
+                                             size_t (*read_fn)(void *, uint8_t *, size_t)) {
+  RustReadStreambuf buf(ctx, read_fn);
+  std::istream is(&buf);
+  BRep_Builder builder;
+  BRepTools::Read(*shape, is, builder);
+  return !is.fail();
+}
+
+extern "C" inline bool write_brep_bin_stream(const TopoDS_Shape *shape, void *ctx,
+                                             size_t (*write_fn)(void *, const uint8_t *, size_t)) {
+  RustWriteStreambuf buf(ctx, write_fn);
+  std::ostream os(&buf);
+  BinTools::Write(*shape, os);
+  return !os.fail();
+}
+
+extern "C" inline bool read_brep_bin_stream(TopoDS_Shape *shape, void *ctx,
+                                            size_t (*read_fn)(void *, uint8_t *, size_t)) {
+  RustReadStreambuf buf(ctx, read_fn);
+  std::istream is(&buf);
+  BinTools::Read(*shape, is);
+  return !is.fail();
+}
+
 // Collections
 inline void map_shapes(const TopoDS_Shape &S, const TopAbs_ShapeEnum T, TopTools_IndexedMapOfShape &M) {
   TopExp::MapShapes(S, T, M);

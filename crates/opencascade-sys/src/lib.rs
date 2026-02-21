@@ -404,6 +404,9 @@ pub mod ffi {
         type TopoDS_Shape;
 
         #[cxx_name = "construct_unique"]
+        pub fn TopoDS_Shape_ctor() -> UniquePtr<TopoDS_Shape>;
+
+        #[cxx_name = "construct_unique"]
         pub fn TopoDS_Face_ctor() -> UniquePtr<TopoDS_Face>;
 
         pub fn cast_vertex_to_shape(wire: &TopoDS_Vertex) -> &TopoDS_Shape;
@@ -1412,6 +1415,39 @@ pub mod ffi {
 
         pub fn BRepBndLib_Add(shape: &TopoDS_Shape, bb: Pin<&mut Bnd_Box>, use_triangulation: bool);
 
+    }
+}
+
+/// True streaming BRep I/O via C callbacks — bypasses the cxx bridge since
+/// cxx does not support function pointer parameters.
+pub mod stream_ffi {
+    use super::ffi;
+    use std::ffi::c_void;
+
+    extern "C" {
+        pub fn write_brep_text_stream(
+            shape: *const ffi::TopoDS_Shape,
+            ctx: *mut c_void,
+            write_fn: unsafe extern "C" fn(*mut c_void, *const u8, usize) -> usize,
+        ) -> bool;
+
+        pub fn read_brep_text_stream(
+            shape: *mut ffi::TopoDS_Shape,
+            ctx: *mut c_void,
+            read_fn: unsafe extern "C" fn(*mut c_void, *mut u8, usize) -> usize,
+        ) -> bool;
+
+        pub fn write_brep_bin_stream(
+            shape: *const ffi::TopoDS_Shape,
+            ctx: *mut c_void,
+            write_fn: unsafe extern "C" fn(*mut c_void, *const u8, usize) -> usize,
+        ) -> bool;
+
+        pub fn read_brep_bin_stream(
+            shape: *mut ffi::TopoDS_Shape,
+            ctx: *mut c_void,
+            read_fn: unsafe extern "C" fn(*mut c_void, *mut u8, usize) -> usize,
+        ) -> bool;
     }
 }
 

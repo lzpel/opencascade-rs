@@ -8,8 +8,12 @@ use crate::{
 };
 use cxx::UniquePtr;
 use glam::{dvec2, dvec3, DVec3};
-use opencascade_sys::ffi;
-use std::path::Path;
+use opencascade_sys::{ffi, stream_ffi};
+use std::{
+    ffi::c_void,
+    io::{Read, Write},
+    path::Path,
+};
 
 pub struct Shape {
     pub(crate) inner: UniquePtr<ffi::TopoDS_Shape>,
@@ -567,6 +571,114 @@ impl Shape {
             Ok(())
         } else {
             Err(Error::IgesWriteFailed)
+        }
+    }
+
+    pub fn write_brep_text_to<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
+        unsafe extern "C" fn callback<W: Write>(
+            ctx: *mut c_void,
+            data: *const u8,
+            len: usize,
+        ) -> usize {
+            let writer = &mut *(ctx as *mut W);
+            match writer.write_all(std::slice::from_raw_parts(data, len)) {
+                Ok(()) => len,
+                Err(_) => 0,
+            }
+        }
+        let success = unsafe {
+            stream_ffi::write_brep_text_stream(
+                &*self.inner as *const ffi::TopoDS_Shape,
+                writer as *mut W as *mut c_void,
+                callback::<W>,
+            )
+        };
+        if success {
+            Ok(())
+        } else {
+            Err(Error::BrepWriteFailed)
+        }
+    }
+
+    pub fn read_brep_text_from<R: Read>(mut reader: R) -> Result<Self, Error> {
+        unsafe extern "C" fn callback<R: Read>(
+            ctx: *mut c_void,
+            data: *mut u8,
+            len: usize,
+        ) -> usize {
+            let reader = &mut *(ctx as *mut R);
+            match reader.read(std::slice::from_raw_parts_mut(data, len)) {
+                Ok(n) => n,
+                Err(_) => 0,
+            }
+        }
+        let mut inner = ffi::TopoDS_Shape_ctor();
+        let success = unsafe {
+            let ptr = inner.pin_mut().get_unchecked_mut() as *mut ffi::TopoDS_Shape;
+            stream_ffi::read_brep_text_stream(
+                ptr,
+                &mut reader as *mut R as *mut c_void,
+                callback::<R>,
+            )
+        };
+        if success {
+            Ok(Self { inner })
+        } else {
+            Err(Error::BrepReadFailed)
+        }
+    }
+
+    pub fn write_brep_bin_to<W: Write>(&self, writer: &mut W) -> Result<(), Error> {
+        unsafe extern "C" fn callback<W: Write>(
+            ctx: *mut c_void,
+            data: *const u8,
+            len: usize,
+        ) -> usize {
+            let writer = &mut *(ctx as *mut W);
+            match writer.write_all(std::slice::from_raw_parts(data, len)) {
+                Ok(()) => len,
+                Err(_) => 0,
+            }
+        }
+        let success = unsafe {
+            stream_ffi::write_brep_bin_stream(
+                &*self.inner as *const ffi::TopoDS_Shape,
+                writer as *mut W as *mut c_void,
+                callback::<W>,
+            )
+        };
+        if success {
+            Ok(())
+        } else {
+            Err(Error::BrepWriteFailed)
+        }
+    }
+
+    pub fn read_brep_bin_from<R: Read>(mut reader: R) -> Result<Self, Error> {
+        unsafe extern "C" fn callback<R: Read>(
+            ctx: *mut c_void,
+            data: *mut u8,
+            len: usize,
+        ) -> usize {
+            let reader = &mut *(ctx as *mut R);
+            match reader.read(std::slice::from_raw_parts_mut(data, len)) {
+                Ok(n) => n,
+                Err(_) => 0,
+            }
+        }
+        let mut inner = ffi::TopoDS_Shape_ctor();
+        let success = unsafe {
+            let ptr = inner.pin_mut().get_unchecked_mut() as *mut ffi::TopoDS_Shape;
+            stream_ffi::read_brep_bin_stream(
+                ptr,
+                &mut reader as *mut R as *mut c_void,
+                callback::<R>,
+            )
+        };
+        if success {
+            Ok(Self { inner })
+        } else {
+            Err(Error::BrepReadFailed)
         }
     }
 
