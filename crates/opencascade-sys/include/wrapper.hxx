@@ -6,6 +6,7 @@
 #include <BRepAlgoAPI_Fuse.hxx>
 #include <BRepAlgoAPI_Section.hxx>
 #include <BRepBndLib.hxx>
+#include <BRepBuilderAPI_Copy.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepBuilderAPI_MakeEdge.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
@@ -32,6 +33,7 @@
 #include <BRepOffsetAPI_ThruSections.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
+#include <BRepPrimAPI_MakeHalfSpace.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
 #include <BRepPrimAPI_MakePrism.hxx>
 #include <BRepPrimAPI_MakeRevol.hxx>
@@ -84,6 +86,7 @@
 #include <gp_Ax3.hxx>
 #include <gp_Circ.hxx>
 #include <gp_Lin.hxx>
+#include <gp_Pln.hxx>
 #include <gp_Pnt.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_Vec.hxx>
@@ -254,6 +257,10 @@ inline std::unique_ptr<gp_Ax3> gp_Ax3_from_gp_Ax2(const gp_Ax2 &axis) {
   return std::unique_ptr<gp_Ax3>(new gp_Ax3(axis));
 }
 
+inline std::unique_ptr<gp_Pln> gp_Pln_ctor(const gp_Pnt &origin, const gp_Dir &normal) {
+  return std::unique_ptr<gp_Pln>(new gp_Pln(origin, normal));
+}
+
 inline std::unique_ptr<gp_Dir> gp_Dir_ctor(double x, double y, double z) {
   return std::unique_ptr<gp_Dir>(new gp_Dir(x, y, z));
 }
@@ -274,6 +281,10 @@ inline std::unique_ptr<HandleLawFunction> Law_Function_to_handle(std::unique_ptr
 // Law_Interpol stuff
 inline std::unique_ptr<Law_Function> Law_Interpol_into_Law_Function(std::unique_ptr<Law_Interpol> law_interpol) {
   return std::unique_ptr<Law_Function>(law_interpol.release());
+}
+
+inline std::unique_ptr<BRepBuilderAPI_MakeFace> BRepBuilderAPI_MakeFace_plane(const gp_Pln &plane) {
+  return std::unique_ptr<BRepBuilderAPI_MakeFace>(new BRepBuilderAPI_MakeFace(plane));
 }
 
 // Shape stuff

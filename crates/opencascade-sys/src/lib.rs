@@ -567,10 +567,24 @@ pub mod ffi {
             edge_tolerance: f64,
         ) -> UniquePtr<BRepBuilderAPI_MakeFace>;
 
+        pub fn BRepBuilderAPI_MakeFace_plane(
+            plane: &gp_Pln,
+        ) -> UniquePtr<BRepBuilderAPI_MakeFace>;
+
         pub fn Face(self: &BRepBuilderAPI_MakeFace) -> &TopoDS_Face;
         pub fn Shape(self: Pin<&mut BRepBuilderAPI_MakeFace>) -> &TopoDS_Shape;
         pub fn Build(self: Pin<&mut BRepBuilderAPI_MakeFace>, progress: &Message_ProgressRange);
         pub fn IsDone(self: &BRepBuilderAPI_MakeFace) -> bool;
+
+        type BRepBuilderAPI_Copy;
+
+        #[cxx_name = "construct_unique"]
+        pub fn BRepBuilderAPI_Copy_ctor(
+            shape: &TopoDS_Shape,
+        ) -> UniquePtr<BRepBuilderAPI_Copy>;
+
+        pub fn Shape(self: Pin<&mut BRepBuilderAPI_Copy>) -> &TopoDS_Shape;
+        pub fn IsDone(self: &BRepBuilderAPI_Copy) -> bool;
 
         // BRepAdaptor
         type BRepAdaptor_Curve;
@@ -706,6 +720,19 @@ pub mod ffi {
         pub fn Shape(self: Pin<&mut BRepPrimAPI_MakeTorus>) -> &TopoDS_Shape;
         pub fn Build(self: Pin<&mut BRepPrimAPI_MakeTorus>, progress: &Message_ProgressRange);
         pub fn IsDone(self: &BRepPrimAPI_MakeTorus) -> bool;
+
+        type BRepPrimAPI_MakeHalfSpace;
+
+        #[cxx_name = "construct_unique"]
+        pub fn BRepPrimAPI_MakeHalfSpace_ctor(
+            face: &TopoDS_Face,
+            ref_point: &gp_Pnt,
+        ) -> UniquePtr<BRepPrimAPI_MakeHalfSpace>;
+
+        pub fn Shape(self: Pin<&mut BRepPrimAPI_MakeHalfSpace>) -> &TopoDS_Shape;
+        pub fn Solid(self: &BRepPrimAPI_MakeHalfSpace) -> &TopoDS_Solid;
+        pub fn Build(self: Pin<&mut BRepPrimAPI_MakeHalfSpace>, progress: &Message_ProgressRange);
+        pub fn IsDone(self: &BRepPrimAPI_MakeHalfSpace) -> bool;
 
         // BRepLib
         pub fn BRepLibBuildCurves3d(shape: &TopoDS_Shape) -> bool;
@@ -971,6 +998,11 @@ pub mod ffi {
 
         #[cxx_name = "construct_unique"]
         pub fn gp_Ax2d_ctor(point: &gp_Pnt2d, dir: &gp_Dir2d) -> UniquePtr<gp_Ax2d>;
+
+        type gp_Pln;
+
+        #[cxx_name = "construct_unique"]
+        pub fn gp_Pln_ctor(origin: &gp_Pnt, normal: &gp_Dir) -> UniquePtr<gp_Pln>;
 
         // Geometry Interpolation
         type GeomAPI_Interpolate;
