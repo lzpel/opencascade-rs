@@ -280,6 +280,32 @@ impl Shape {
         Self { inner }
     }
 
+    /// Return a deep copy of this shape, decoupling it from any shared underlying geometry.
+    ///
+    /// Use this after boolean operations or `clean` when you need the result to live
+    /// independently of its inputs (avoids heap corruption on drop).
+    #[must_use]
+    pub fn deep_copy(&self) -> Self {
+        let mut copy = ffi::BRepBuilderAPI_Copy_ctor(&self.inner);
+        Self::from_shape(copy.pin_mut().Shape())
+    }
+
+    /// Construct a half-space solid bounded by an infinite planar face.
+    ///
+    /// `plane_origin` is a point on the plane; `plane_normal` is the outward normal.
+    /// The solid fills the half-space on the side the normal points **toward**.
+    pub fn half_space(plane_origin: DVec3, plane_normal: DVec3) -> Self {
+        let origin = make_point(plane_origin);
+        let normal = make_dir(plane_normal);
+        let plane = ffi::gp_Pln_ctor(&origin, &normal);
+        let make_face = ffi::BRepBuilderAPI_MakeFace_plane(&plane);
+        let face = make_face.Face();
+        // Derive the reference point opposite to the normal (outward-normal convention).
+        let ref_point = make_point(plane_origin - plane_normal.normalize());
+        let mut hs = ffi::BRepPrimAPI_MakeHalfSpace_ctor(face, &ref_point);
+        Self::from_shape(hs.pin_mut().Shape())
+    }
+
     /// Make a shape that models empty space.
     pub fn empty() -> Self {
         // NOTE: It may seem like using `TopoDS_Shape()` directly should work,
